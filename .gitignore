@@ -1,0 +1,47 @@
+# Executáveis
+wordcount
+*.out
+*.exe
+
+# Objetos e arquivos intermediários de compilação
+*.o
+*.a
+*.so
+*.d
+
+# Diretórios de build
+build/
+bin/
+obj/
+
+# Arquivos gerados pelos testes
+tests/output/
+tests/*.log
+tests/*.tmp
+
+# Arquivos de profiling e cobertura
+gmon.out
+*.gcda
+*.gcno
+*.gcov
+
+# Valgrind
+vgcore.*
+callgrind.out.*
+cachegrind.out.*
+
+# Arquivos de editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários gerados pelo programa
+*.tmp
+generated_*.txt
+
+# Não incluir o zip final de entrega no repositório
+*.zip
