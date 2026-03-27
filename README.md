@@ -28,16 +28,16 @@ Implementação de um sistema de **contagem de frequência de palavras** utiliza
 ├── README.md                  # Este arquivo
 ├── relatorio.pdf              # Relatório da equipe
 ├── src/
-│   ├── hash.c / hash.h        # Implementação da tabela hash (duas funções de espalhamento)
-│   ├── heap.c / heap.h        # Implementação do heap (max-heap para top-k palavras)
-│   ├── rng.c / rng.h          # Gerador de números aleatórios (dois métodos)
-│   ├── wordcount.c / wordcount.h  # Lógica principal de contagem de palavras
-│   └── main.c                 # Ponto de entrada do programa
+│   ├── hash.cpp / hash.hpp        # Implementação da tabela hppash (duas funções de espalhamento)
+│   ├── heap.cpp / heap.hpp        # Implementação do heap (max-ppheap para top-k palavras)
+│   ├── rng.cpp / rng.hpp          # Gerador de números aleatórippos (dois métodos)
+│   ├── wordcount.cpp / wordcount.hpp  # Lógica principal de contagem de palavras
+│   └── main.cpp                 # Ponto de entrada do programa
 ├── tests/
 │   ├── run_tests.sh           # Script principal para execução de todos os testes
-│   ├── test_hash.c            # Testes unitários da tabela hash
-│   ├── test_heap.c            # Testes unitários do heap
-│   ├── test_rng.c             # Testes do gerador de números aleatórios
+│   ├── test_hash.cpp            # Testes unitários da tabela hash
+│   ├── test_heap.cpp            # Testes unitários do heap
+│   ├── test_rng.cpp             # Testes do gerador de números aleatórios
 │   └── seeds.txt              # Seeds fixas para testes reprodutíveis
 ├── inputs/
 │   ├── texto_real_pequeno.txt # Texto real de entrada pequeno
