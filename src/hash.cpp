@@ -15,7 +15,7 @@ HashTable::~HashTable() {
     }
 }
 
-// ---- djb2 ----
+// djb2
 size_t HashTable::djb2(const std::string& word) const {
     size_t h = 5381;
     for (unsigned char c : word)
@@ -23,7 +23,7 @@ size_t HashTable::djb2(const std::string& word) const {
     return h % capacity_;
 }
 
-// ---- FNV-1a (64-bit) ----
+// FNV-1a (64-bit) 
 size_t HashTable::fnv1a(const std::string& word) const {
     uint64_t h = 14695981039346656037ULL; // FNV offset basis
     for (unsigned char c : word) {
@@ -51,7 +51,7 @@ void HashTable::increment(const std::string& word) {
         }
     }
 
-    // Palavra nova: insere no início da lista do bucket
+    // Insere no início da lista do bucket
     HashEntry* entry = new HashEntry(word, 1);
     entry->next = buckets_[idx];
     buckets_[idx] = entry;

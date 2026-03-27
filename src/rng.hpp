@@ -1,18 +1,6 @@
 #pragma once
 #include <cstdint>
 
-// ============================================================
-// Gerador de Números Pseudo-Aleatórios
-//
-// Método 1: LCG (Linear Congruential Generator)
-//   - Clássico, rápido, período conhecido
-//   - Parâmetros de Knuth (MMIX)
-//
-// Método 2: Xorshift64
-//   - Período 2^64 - 1, excelente distribuição
-//   - Muito mais rápido e melhor qualidade que LCG
-// ============================================================
-
 class RNG {
 public:
     enum class Method { LCG, XORSHIFT };

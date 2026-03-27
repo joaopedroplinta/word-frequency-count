@@ -15,7 +15,7 @@ struct RunStats {
     size_t hash_collisions= 0;
     size_t heap_ops       = 0;
     double load_factor    = 0.0;
-    long long time_ms     = 0;   // tempo total em milissegundos
+    long long time_ms     = 0;  
 };
 
 class WordCounter {

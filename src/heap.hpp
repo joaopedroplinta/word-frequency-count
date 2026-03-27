@@ -3,18 +3,6 @@
 #include <vector>
 #include <cstddef>
 
-// ============================================================
-// Max-Heap para extrair as k palavras mais frequentes
-//
-// Cada elemento armazena (palavra, contagem).
-// A prioridade é a contagem — maior contagem = maior prioridade.
-//
-// Operações:
-//   push(word, count)  — insere e sobe (sift-up)
-//   pop()              — remove raiz e desce (sift-down)
-//   top()              — peek na raiz
-//   build(vector)      — heapify em O(n)
-// ============================================================
 
 struct HeapNode {
     std::string word;
@@ -36,11 +24,11 @@ public:
     bool empty() const { return data_.empty(); }
     size_t size() const { return data_.size(); }
 
-    // Retorna os k maiores elementos em ordem decrescente de contagem
-    // (consome o heap)
+    // Retorna os k maiores elementos em ordem decrescente de contagem (consome o heap)
     std::vector<HeapNode> top_k(size_t k);
 
-    size_t ops() const { return ops_; } // número de comparações realizadas
+    // número de comparações realizadas
+    size_t ops() const { return ops_; } 
 
 private:
     std::vector<HeapNode> data_;

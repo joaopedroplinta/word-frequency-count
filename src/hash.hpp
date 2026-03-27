@@ -31,7 +31,7 @@ struct HashEntry {
 struct HashStats {
     size_t inserts      = 0;
     size_t lookups      = 0;
-    size_t collisions   = 0;  // vezes que o bucket já estava ocupado
+    size_t collisions   = 0; 
     size_t unique_words = 0;
 };
 
@@ -40,14 +40,11 @@ public:
     explicit HashTable(size_t capacity = 16384, HashFunc func = HashFunc::DJB2);
     ~HashTable();
 
-    // Incrementa contagem da palavra (insere com count=1 se não existir)
     void increment(const std::string& word);
 
-    // Retorna contagem da palavra (0 se não existir)
     int get(const std::string& word) const;
 
     // Itera sobre todos os pares (palavra, contagem)
-    // callback: void(const std::string& word, int count)
     template<typename Fn>
     void for_each(Fn callback) const {
         for (size_t i = 0; i < capacity_; ++i) {
