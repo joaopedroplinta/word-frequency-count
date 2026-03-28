@@ -1,3 +1,11 @@
-42
-12345
-987654321
+# Seeds fixas para testes reprodutíveis
+# Formato: <seed> <descrição>
+# Use estas seeds nos scripts para garantir que os mesmos resultados
+# sejam obtidos em qualquer execução.
+
+42       seed_padrao
+123      seed_alternativa
+9999     seed_grande
+314159   seed_pi
+777      seed_sorte
+1000000  seed_milhao

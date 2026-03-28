@@ -1,126 +1,116 @@
 #!/bin/bash
+# run_tests.sh — executa testes unitários e de desempenho
+# Todos os testes aleatórios usam seeds fixas de seeds.txt para reprodutibilidade
 
-# Cores
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$SCRIPT_DIR/.."
+BIN="$ROOT/wordcount"
+SEEDS_FILE="$SCRIPT_DIR/seeds.txt"
+SEP="============================================================"
 
-echo -e "${BLUE}====================================================${NC}"
-echo -e "${BLUE}  Iniciando Testes e Geração Automática do LaTeX... ${NC}"
-echo -e "${BLUE}====================================================\n${NC}"
+GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
+pass() { echo -e "  ${GREEN}[PASS]${NC} $1"; }
+fail() { echo -e "  ${RED}[FAIL]${NC} $1"; GLOBAL_FAIL=1; }
+header() { echo -e "\n${YELLOW}$SEP${NC}\n ${1}\n${YELLOW}$SEP${NC}"; }
+GLOBAL_FAIL=0
 
-# 1. Compila
-make clean && make
-if [ $? -ne 0 ]; then
-    echo "Erro na compilação!"
-    exit 1
+# Compilar tudo
+header "Compilando projeto e testes"
+cd "$ROOT"
+make all tests -s && pass "Compilação bem-sucedida" || { fail "Falha na compilação"; exit 1; }
+
+# Testes unitários
+header "Testes Unitários"
+for test_bin in tests/test_rng tests/test_hash tests/test_heap; do
+    name=$(basename $test_bin)
+    echo -e "\n>> $name"
+    if ./$test_bin; then
+        pass "$name: todos os casos passaram"
+    else
+        fail "$name: algum caso falhou"
+    fi
+done
+
+# Lê seeds do arquivo
+SEEDS=()
+while IFS= read -r line; do
+    [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+    seed=$(echo $line | awk '{print $1}')
+    SEEDS+=("$seed")
+done < "$SEEDS_FILE"
+
+# Reprodutibilidade
+header "Reprodutibilidade: mesma seed = mesmo resultado"
+seed=${SEEDS[0]}
+out1=$($BIN --random -n 10000 -s $seed -k 5 -h 1 -r 1 2>/dev/null)
+out2=$($BIN --random -n 10000 -s $seed -k 5 -h 1 -r 1 2>/dev/null)
+[ "$out1" = "$out2" ] && pass "seed=$seed: LCG+djb2 reprodutível" || fail "seed=$seed: LCG+djb2 diverge"
+
+out3=$($BIN --random -n 10000 -s $seed -k 5 -h 2 -r 2 2>/dev/null)
+out4=$($BIN --random -n 10000 -s $seed -k 5 -h 2 -r 2 2>/dev/null)
+[ "$out3" = "$out4" ] && pass "seed=$seed: Xorshift+fnv1a reprodutível" || fail "seed=$seed: Xorshift+fnv1a diverge"
+
+out5=$($BIN --random -n 10000 -s ${SEEDS[0]} -k 5 -h 1 2>/dev/null)
+out6=$($BIN --random -n 10000 -s ${SEEDS[1]} -k 5 -h 1 2>/dev/null)
+[ "$out5" != "$out6" ] && pass "seeds diferentes geram resultados diferentes" || fail "seeds diferentes geraram saídas iguais"
+
+# Escala
+header "Testes de Escala"
+echo ""
+printf "%-12s %-8s %-12s %-12s %-10s\n" "Palavras" "Hash" "Unicas" "Colisoes" "Tempo(ms)"
+printf "%-12s %-8s %-12s %-12s %-10s\n" "--------" "----" "------" "--------" "---------"
+for n in 1000 10000 100000 500000; do
+    for hfunc in 1 2; do
+        hname="djb2"; [ $hfunc -eq 2 ] && hname="fnv1a"
+        result=$($BIN --random -n $n -s 42 -k 1 -h $hfunc -r 1 --stats 2>/dev/null)
+        unique=$(echo "$result" | grep "Palavras" | awk '{print $NF}')
+        collis=$(echo "$result" | grep "Colisoes\|Colisões" | awk '{print $NF}')
+        tempo=$(echo  "$result" | grep "Tempo" | awk '{print $NF}')
+        printf "%-12s %-8s %-12s %-12s %-10s\n" "$n" "$hname" "$unique" "$collis" "$tempo"
+    done
+done
+
+# Comparação hash
+header "Comparação: djb2 vs fnv1a (top-1 por seed)"
+echo ""
+for seed in "${SEEDS[@]}"; do
+    top_djb2=$($BIN  --random -n 50000 -s $seed -k 1 -h 1 2>/dev/null | grep "^1 " | awk '{print $2, $3}')
+    top_fnv1a=$($BIN --random -n 50000 -s $seed -k 1 -h 2 2>/dev/null | grep "^1 " | awk '{print $2, $3}')
+    printf "  seed=%-8s djb2=[ %-20s ] fnv1a=[ %s ]\n" "$seed" "$top_djb2" "$top_fnv1a"
+done
+
+# Comparação RNG
+header "Comparação: LCG vs Xorshift (top-3 por seed)"
+echo ""
+for seed in "${SEEDS[@]}"; do
+    top_lcg=$($BIN --random -n 50000 -s $seed -k 3 -r 1 2>/dev/null | grep "^[123] " | awk '{print $2}' | tr '\n' ' ')
+    top_xor=$($BIN --random -n 50000 -s $seed -k 3 -r 2 2>/dev/null | grep "^[123] " | awk '{print $2}' | tr '\n' ' ')
+    printf "  seed=%-8s LCG=[ %-30s ] Xorshift=[ %s ]\n" "$seed" "$top_lcg" "$top_xor"
+done
+
+# Arquivos reais
+header "Testes com Arquivos de Texto Real"
+for f in "$ROOT/inputs/"*.txt; do
+    fname=$(basename "$f")
+    echo -e "\n>> $fname"
+    for hfunc in 1 2; do
+        hname="djb2"; [ $hfunc -eq 2 ] && hname="fnv1a"
+        result=$($BIN -f "$f" -k 5 -h $hfunc --stats 2>/dev/null)
+        total=$(echo  "$result" | grep "Total"   | awk '{print $NF}')
+        unique=$(echo "$result" | grep "nicas"   | awk '{print $NF}')
+        lf=$(echo     "$result" | grep "carga"   | awk '{print $NF}')
+        tempo=$(echo  "$result" | grep "Tempo"   | awk '{print $NF}')
+        printf "  %-8s total=%-8s unicas=%-6s fator_carga=%-8s tempo=%sms\n" "$hname" "$total" "$unique" "$lf" "$tempo"
+    done
+done
+
+# Resultado
+echo ""
+echo "$SEP"
+if [ $GLOBAL_FAIL -eq 0 ]; then
+    echo -e " ${GREEN}TODOS OS TESTES PASSARAM${NC}"
+else
+    echo -e " ${RED}ALGUNS TESTES FALHARAM${NC}"
 fi
-
-ARQ="inputs/texto_real_grande.txt"
-if [ ! -f "$ARQ" ]; then
-    echo "Aviso: Arquivo $ARQ não encontrado! O relatório terá valores vazios."
-fi
-
-echo -e "${YELLOW}[1/3] Coletando dados da Tabela Hash (DJB2 vs FNV1A)...${NC}"
-# Roda DJB2 e captura os valores
-OUT_DJB2=$(./wordcount -f "$ARQ" -h 1 --stats)
-TIME_DJB2=$(echo "$OUT_DJB2" | grep "Tempo total" | awk '{print $NF}')
-COL_DJB2=$(echo "$OUT_DJB2" | grep "Colisões na hash" | awk '{print $NF}')
-INS_DJB2=$(echo "$OUT_DJB2" | grep "Inserções na hash" | awk '{print $NF}')
-FC_DJB2=$(echo "$OUT_DJB2" | grep "Fator de carga" | awk '{print $NF}')
-
-# Roda FNV1A e captura os valores
-OUT_FNV=$(./wordcount -f "$ARQ" -h 2 --stats)
-TIME_FNV=$(echo "$OUT_FNV" | grep "Tempo total" | awk '{print $NF}')
-COL_FNV=$(echo "$OUT_FNV" | grep "Colisões na hash" | awk '{print $NF}')
-INS_FNV=$(echo "$OUT_FNV" | grep "Inserções na hash" | awk '{print $NF}')
-FC_FNV=$(echo "$OUT_FNV" | grep "Fator de carga" | awk '{print $NF}')
-
-echo -e "${YELLOW}[2/3] Coletando dados dos Geradores (LCG vs XORSHIFT)...${NC}"
-OUT_LCG=$(./wordcount --random -n 50000 -s 42 -r 1 -h 1 --stats)
-TIME_LCG=$(echo "$OUT_LCG" | grep "Tempo total" | awk '{print $NF}')
-OPS_LCG=$(echo "$OUT_LCG" | grep "Inserções na hash" | awk '{print $NF}')
-
-OUT_XOR=$(./wordcount --random -n 50000 -s 42 -r 2 -h 1 --stats)
-TIME_XOR=$(echo "$OUT_XOR" | grep "Tempo total" | awk '{print $NF}')
-OPS_XOR=$(echo "$OUT_XOR" | grep "Inserções na hash" | awk '{print $NF}')
-
-echo -e "${YELLOW}[3/3] Escrevendo relatorio.tex...${NC}"
-
-# Cria o template LaTeX bloqueando expansão do bash (usando 'EOF')
-cat << 'EOF' > relatorio.tex
-\documentclass[12pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[portuguese]{babel}
-\usepackage{geometry}
-\usepackage{booktabs}
-\usepackage{hyperref}
-\usepackage{float}
-
-\geometry{a4paper, margin=2.5cm}
-
-\title{\textbf{Trabalho 1 — Contagem de Frequência de Palavras} \\ \large Estruturas de Dados Avançadas}
-\author{João Pedro dos Santos Henrique Plinta \\ Odair Monteschio Duarte}
-\date{\today}
-
-\begin{document}
-\maketitle
-
-\begin{abstract}
-Este relatório apresenta a análise empírica de um sistema de contagem de frequência de palavras desenvolvido em C++, gerado de forma totalmente automatizada pelos scripts de teste da aplicação.
-\end{abstract}
-
-\section{Análise das Funções de Espalhamento}
-A tabela abaixo compara o desempenho das funções DJB2 e FNV-1a utilizando o arquivo de texto grande, evidenciando o compromisso entre tempo de execução e taxa de colisão.
-
-\begin{table}[H]
-\centering
-\caption{Comparativo de desempenho entre DJB2 e FNV-1a (Texto Grande)}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Função} & \textbf{Tempo (ms)} & \textbf{Colisões} & \textbf{Inserções} & \textbf{Fator de Carga} \\ \midrule
-DJB2            & __TIME_DJB2__       & __COL_DJB2__      & __INS_DJB2__       & __FC_DJB2__             \\
-FNV-1a          & __TIME_FNV__        & __COL_FNV__       & __INS_FNV__        & __FC_FNV__              \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\section{Análise dos Geradores Aleatórios (RNG)}
-Para validar a robustez, 50.000 palavras sintéticas foram geradas usando uma seed estática (42).
-
-\begin{table}[H]
-\centering
-\caption{Desempenho da geração sintética (50.000 palavras)}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Método RNG} & \textbf{Tempo Total (ms)} & \textbf{Operações} \\ \midrule
-LCG                 & __TIME_LCG__              & __OPS_LCG__        \\
-Xorshift (64-bit)   & __TIME_XOR__              & __OPS_XOR__        \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\section{Conclusão}
-O sistema demonstrou alta estabilidade e eficiência, comprovadas pela extração automatizada de métricas. As estruturas clássicas como a tabela hash e o heap garantem processamento em escala mantendo tempo hábil.
-
-\end{document}
-EOF
-
-# Injeta as variáveis do bash para dentro do arquivo .tex substituindo as tags
-sed -i "s/__TIME_DJB2__/$TIME_DJB2/g" relatorio.tex
-sed -i "s/__COL_DJB2__/$COL_DJB2/g" relatorio.tex
-sed -i "s/__INS_DJB2__/$INS_DJB2/g" relatorio.tex
-sed -i "s/__FC_DJB2__/$FC_DJB2/g" relatorio.tex
-
-sed -i "s/__TIME_FNV__/$TIME_FNV/g" relatorio.tex
-sed -i "s/__COL_FNV__/$COL_FNV/g" relatorio.tex
-sed -i "s/__INS_FNV__/$INS_FNV/g" relatorio.tex
-sed -i "s/__FC_FNV__/$FC_FNV/g" relatorio.tex
-
-sed -i "s/__TIME_LCG__/$TIME_LCG/g" relatorio.tex
-sed -i "s/__OPS_LCG__/$OPS_LCG/g" relatorio.tex
-sed -i "s/__TIME_XOR__/$TIME_XOR/g" relatorio.tex
-sed -i "s/__OPS_XOR__/$OPS_XOR/g" relatorio.tex
-
-echo -e "${GREEN}✅ Sucesso! O arquivo 'relatorio.tex' foi gerado na raiz do projeto com os dados reais da sua máquina.${NC}"
-echo -e "${BLUE}====================================================${NC}"
+echo "$SEP"
+exit $GLOBAL_FAIL
