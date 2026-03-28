@@ -6,7 +6,7 @@ Uso: python3 tests/gen_report.py [--json <arquivo>] [--out <diretório>]
 import json, sys, os, subprocess, argparse, datetime
 from collections import defaultdict
 
-# argumentos
+# ── argumentos ─────────────────────────────────────────────────────────────────
 ap = argparse.ArgumentParser()
 ap.add_argument("--json", default="benchmark_results.json")
 ap.add_argument("--out",  default=".")
@@ -16,7 +16,7 @@ with open(args.json) as f:
     data = json.load(f)
 
 def esc(s):
-    # Escapa caracteres especiais LaTeX
+    """Escapa caracteres especiais LaTeX"""
     return (str(s)
         .replace("_", r"\_")
         .replace("&", r"\&")
@@ -26,7 +26,7 @@ def esc(s):
         .replace("~", r"\textasciitilde{}")
     )
 
-# separa datasets
+# ── separa datasets ─────────────────────────────────────────────────────────────
 scale_djb2   = [r for r in data if not r["is_file"] and r["hash_func"]=="djb2"
                                  and r["rng_method"]=="LCG" and r["input_size"]>0
                                  and r["input_size"] <= 500000
@@ -51,7 +51,7 @@ def file_label(path):
     if "grande"  in b: return "Grande (~50000)"
     return esc(b)
 
-# tabela de escala 
+# ── tabela de escala ───────────────────────────────────────────────────────────
 def scale_table():
     rows = []
     sizes = sorted({r["input_size"] for r in scale_djb2})
@@ -67,7 +67,7 @@ def scale_table():
         )
     return "\n".join(rows)
 
-# tabela de arquivos reais
+# ── tabela de arquivos reais ───────────────────────────────────────────────────
 def files_table():
     rows = []
     seen = {}
@@ -84,7 +84,7 @@ def files_table():
         )
     return "\n".join(rows)
 
-# tabela RNG
+# ── tabela RNG ─────────────────────────────────────────────────────────────────
 def rng_table():
     rows = []
     seeds_l = sorted({int(r["label"].split("seed")[1]) for r in rng_lcg})
@@ -98,7 +98,7 @@ def rng_table():
         )
     return "\n".join(rows)
 
-# calcula estatísticas resumidas
+# ── calcula estatísticas resumidas ─────────────────────────────────────────────
 def avg(lst, key):
     vals = [r[key] for r in lst if key in r and r[key] is not None]
     return sum(vals)/len(vals) if vals else 0
@@ -110,12 +110,11 @@ avg_t_xor    = avg(rng_xor, "time_ms")
 
 date_str = datetime.date.today().strftime("%d de %B de %Y")
 
-# template LaTeX
+# ── template LaTeX ─────────────────────────────────────────────────────────────
 TEX = r"""
 \documentclass[12pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[brazil]{babel}
+\usepackage[portuguese]{babel}
 \usepackage{geometry}
 \usepackage{booktabs}
 \usepackage{hyperref}
@@ -144,7 +143,7 @@ TEX = r"""
   \large Estruturas de Dados Avançadas\\
   \normalsize Bacharelado em Ciência da Computação
 }
-\author{João Pedro dos Santos Henrique Plinta \and Odair Monteschio Duarte}
+\author{Nome do Integrante 1 \and Nome do Integrante 2}
 \date{""" + date_str + r"""}
 
 \begin{document}
@@ -370,7 +369,7 @@ correspondem exatamente à execução real do código, sem transcrição manual.
 \end{document}
 """.strip()
 
-# salva e compila
+# ── salva e compila ─────────────────────────────────────────────────────────────
 tex_path = os.path.join(args.out, "relatorio.tex")
 pdf_path = os.path.join(args.out, "relatorio.pdf")
 
