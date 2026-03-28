@@ -3,6 +3,12 @@ wordcount
 *.out
 *.exe
 
+# Executáveis de teste e benchmark (gerados pelo make)
+tests/test_hash
+tests/test_heap
+tests/test_rng
+tests/benchmark
+
 # Objetos e arquivos intermediários de compilação
 *.o
 *.a
@@ -18,6 +24,15 @@ obj/
 tests/output/
 tests/*.log
 tests/*.tmp
+
+# Arquivos gerados pelo make report
+benchmark_results.json
+relatorio.tex
+relatorio.aux
+relatorio.log
+relatorio.toc
+relatorio.out
+relatorio.pdf
 
 # Arquivos de profiling e cobertura
 gmon.out
