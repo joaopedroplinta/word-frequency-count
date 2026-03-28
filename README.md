@@ -25,25 +25,27 @@ Implementação de um sistema de **contagem de frequência de palavras** utiliza
 
 ```
 .
-├── README.md                  # Este arquivo
-├── relatorio.pdf              # Relatório da equipe
+├── README.md                          # Este arquivo
+├── relatorio.pdf                      # Relatório da equipe
 ├── src/
-│   ├── hash.cpp / hash.hpp        # Implementação da tabela hppash (duas funções de espalhamento)
-│   ├── heap.cpp / heap.hpp        # Implementação do heap (max-ppheap para top-k palavras)
-│   ├── rng.cpp / rng.hpp          # Gerador de números aleatórippos (dois métodos)
+│   ├── hash.cpp / hash.hpp            # Tabela hash (djb2 e FNV-1a)
+│   ├── heap.cpp / heap.hpp            # Max-heap para top-k palavras
+│   ├── rng.cpp / rng.hpp              # Gerador de números aleatórios (LCG e Xorshift64)
 │   ├── wordcount.cpp / wordcount.hpp  # Lógica principal de contagem de palavras
-│   └── main.cpp                 # Ponto de entrada do programa
+│   └── main.cpp                       # Ponto de entrada do programa
 ├── tests/
-│   ├── run_tests.sh           # Script principal para execução de todos os testes
-│   ├── test_hash.cpp            # Testes unitários da tabela hash
-│   ├── test_heap.cpp            # Testes unitários do heap
-│   ├── test_rng.cpp             # Testes do gerador de números aleatórios
-│   └── seeds.txt              # Seeds fixas para testes reprodutíveis
+│   ├── run_tests.sh                   # Script principal para execução de todos os testes
+│   ├── test_hash.cpp                  # Testes unitários da tabela hash
+│   ├── test_heap.cpp                  # Testes unitários do heap
+│   ├── test_rng.cpp                   # Testes do gerador de números aleatórios
+│   ├── benchmark.cpp                  # Coleta métricas de desempenho e gera benchmark_results.json
+│   ├── gen_report.py                  # Lê o JSON e gera relatorio.tex + relatorio.pdf automaticamente
+│   └── seeds.txt                      # Seeds fixas para testes reprodutíveis
 ├── inputs/
-│   ├── texto_real_pequeno.txt # Texto real de entrada pequeno
-│   ├── texto_real_medio.txt   # Texto real de entrada médio
-│   └── texto_real_grande.txt  # Texto real de entrada grande
-└── Makefile                   # Build do projeto
+│   ├── texto_real_pequeno.txt         # Texto de entrada pequeno (~500 palavras)
+│   ├── texto_real_medio.txt           # Texto de entrada médio (~5000 palavras)
+│   └── texto_real_grande.txt          # Texto de entrada grande (~50000 palavras)
+└── Makefile                           # Build do projeto
 ```
 
 ---
@@ -82,12 +84,13 @@ make clean
 |---|---|---|
 | `-f <arquivo>` | Arquivo de texto de entrada | stdin |
 | `-k <número>` | Quantidade de palavras mais frequentes a exibir | 10 |
-| `-h <1|2>` | Função de espalhamento da hash (1 ou 2) | 1 |
-| `-r <1|2>` | Método de geração de números aleatórios (1 ou 2) | 1 |
+| `-h <1\|2>` | Função de espalhamento da hash: 1=djb2, 2=FNV-1a | 1 |
+| `-r <1\|2>` | Método de geração aleatória: 1=LCG, 2=Xorshift64 | 1 |
 | `-s <seed>` | Seed para geração de texto aleatório | 42 |
 | `-n <número>` | Número de palavras a gerar (modo aleatório) | 10000 |
+| `-c <número>` | Capacidade inicial da tabela hash | 16384 |
 | `--random` | Gera texto aleatório em vez de ler arquivo | — |
-| `--stats` | Exibe estatísticas de desempenho (operações, tempo, memória) | — |
+| `--stats` | Exibe estatísticas de desempenho | — |
 
 ### Exemplos
 
@@ -112,13 +115,15 @@ make clean
 bash tests/run_tests.sh
 ```
 
-O script executa automaticamente todos os casos de teste com as seeds definidas em `tests/seeds.txt`, garantindo reprodutibilidade.
+O script executa automaticamente os testes unitários, testes de escala,
+comparação entre funções de hash e geradores, e testes com arquivos reais —
+tudo com seeds fixas de `tests/seeds.txt` para reprodutibilidade.
 
 ### Testes disponíveis
 
-- **Testes unitários:** validam a corretude da hash, do heap e do RNG individualmente.
-- **Testes de desempenho:** comparam as duas funções de espalhamento e os dois métodos de geração de números aleatórios em diferentes tamanhos de entrada.
-- **Testes comparativos:** texto real vs. texto aleatório, entradas pequenas vs. grandes.
+- **Testes unitários:** validam a corretude da hash, do heap e do RNG individualmente (85 casos no total).
+- **Testes de escala:** comparam djb2 e FNV-1a em entradas de 1.000 a 500.000 palavras.
+- **Testes comparativos:** LCG vs Xorshift64, texto real vs texto aleatório.
 
 ### Reprodutibilidade
 
@@ -131,26 +136,39 @@ Todos os testes que envolvem geração aleatória utilizam seeds fixas. Para rep
 
 ---
 
+## Geração do Relatório
+
+O relatório PDF é gerado automaticamente a partir dos dados reais de benchmark:
+
+```bash
+make report
+```
+
+Esse comando compila o benchmark, coleta as métricas, gera `relatorio.tex`
+com os dados reais preenchidos e compila o `relatorio.pdf` via `pdflatex`.
+Requer Python 3 e `pdflatex` (TeX Live) instalados.
+
+---
+
 ## Métricas Coletadas
 
 Para cada execução com `--stats`, o programa reporta:
 
-- Número de operações realizadas na tabela hash (inserções, buscas, colisões)
+- Número de inserções e colisões na tabela hash
+- Fator de carga da tabela hash
 - Número de operações no heap
 - Tempo total de execução (em milissegundos)
-- Uso estimado de memória (em KB)
-- Taxa de colisão da tabela hash
 
 ---
 
 ## Observações e Progresso
 
-- [ ] Implementação da tabela hash com função de espalhamento 1
-- [ ] Implementação da tabela hash com função de espalhamento 2
-- [ ] Implementação do heap (max-heap)
-- [ ] Implementação do RNG — método 1
-- [ ] Implementação do RNG — método 2
-- [ ] Gerador de textos aleatórios
-- [ ] Lógica de contagem e integração das estruturas
-- [ ] Scripts de teste reprodutíveis
-- [ ] Análise de desempenho e relatório
+- [x] Implementação da tabela hash com função de espalhamento 1 (djb2)
+- [x] Implementação da tabela hash com função de espalhamento 2 (FNV-1a)
+- [x] Implementação do heap (max-heap)
+- [x] Implementação do RNG — método 1 (LCG)
+- [x] Implementação do RNG — método 2 (Xorshift64)
+- [x] Gerador de textos aleatórios
+- [x] Lógica de contagem e integração das estruturas
+- [x] Scripts de teste reprodutíveis
+- [x] Análise de desempenho e relatório
