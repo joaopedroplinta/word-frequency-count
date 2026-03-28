@@ -143,7 +143,7 @@ TEX = r"""
   \large Estruturas de Dados Avançadas\\
   \normalsize Bacharelado em Ciência da Computação
 }
-\author{Nome do Integrante 1 \and Nome do Integrante 2}
+\author{João Pedro dos Santos Henrique Plinta \and Odair Monteschio Duarte }
 \date{""" + date_str + r"""}
 
 \begin{document}
