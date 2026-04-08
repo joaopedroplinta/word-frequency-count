@@ -5,9 +5,7 @@
 #include <cstdint>
 #include <cstddef>
 
-// ============================================================
 // Tabela Hash para contagem de frequência de palavras
-//
 // Colisões resolvidas por encadeamento (linked list por bucket)
 //
 // Função 1: djb2
@@ -17,7 +15,6 @@
 // Função 2: FNV-1a (Fowler–Noll–Vo)
 //   - Excelente avalanche, baixa taxa de colisão
 //   - hash = (hash XOR c) * prime
-// ============================================================
 
 enum class HashFunc { DJB2, FNV1A };
 
