@@ -121,7 +121,7 @@ tudo com seeds fixas de `tests/seeds.txt` para reprodutibilidade.
 
 ### Testes disponíveis
 
-- **Testes unitários:** validam a corretude da hash, do heap e do RNG individualmente (85 casos no total).
+- **Testes unitários:** validam a corretude da hash, do heap e do RNG individualmente (97 casos no total), incluindo verificação exaustiva palavra por palavra contra `std::unordered_map` nos três arquivos reais.
 - **Testes de escala:** comparam djb2 e FNV-1a em entradas de 1.000 a 500.000 palavras.
 - **Testes comparativos:** LCG vs Xorshift64, texto real vs texto aleatório.
 
