@@ -55,12 +55,15 @@ void MaxHeap::sift_down(size_t idx) {
 }
 
 std::vector<HeapNode> MaxHeap::top_k(size_t k) {
+    // Trabalha sobre cópia para não consumir o heap original
+    MaxHeap copy(*this);
     std::vector<HeapNode> result;
-    size_t limit = std::min(k, data_.size());
+    size_t limit = std::min(k, copy.data_.size());
     result.reserve(limit);
     for (size_t i = 0; i < limit; ++i) {
-        result.push_back(top());
-        pop();
+        result.push_back(copy.top());
+        copy.pop();
     }
+    ops_ += copy.ops_;
     return result;
 }
