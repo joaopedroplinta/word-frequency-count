@@ -51,4 +51,4 @@ debug: $(TARGET)
 
 clean:
 	rm -f $(TARGET) $(TEST_HASH) $(TEST_HEAP) $(TEST_RNG) $(BENCHMARK)
-	rm -f benchmark_results.json relatorio.tex relatorio.pdf relatorio.aux relatorio.log relatorio.toc relatorio.out
+	rm -f benchmark_results.json relatorio.tex relatorio.aux relatorio.log relatorio.toc relatorio.out
