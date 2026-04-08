@@ -1,10 +1,12 @@
 #include "../src/hash.hpp"
 #include <iostream>
 #include <cassert>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <iomanip>
+#include <cctype>
 
 static int passed = 0;
 static int failed = 0;
@@ -205,6 +207,63 @@ void test_bucket_distribution() {
     }
 }
 
+// T9: Corretude em arquivos reais — comparação exaustiva com std::unordered_map
+void test_correctness_large_files() {
+    std::cout << "\n[T9] Corretude em arquivos reais (comparação exaustiva)\n";
+
+    auto normalize = [](const std::string& token) {
+        std::string result;
+        for (char c : token)
+            if (std::isalpha(static_cast<unsigned char>(c)))
+                result += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return result;
+    };
+
+    std::vector<std::string> files = {
+        "inputs/texto_real_pequeno.txt",
+        "inputs/texto_real_medio.txt",
+        "inputs/texto_real_grande.txt"
+    };
+
+    for (const auto& path : files) {
+        std::ifstream file(path);
+        if (!file) {
+            std::cout << "  [SKIP]   " << path << " não encontrado\n";
+            continue;
+        }
+
+        std::unordered_map<std::string, int> ref;
+        HashTable ht_djb2(16384, HashFunc::DJB2);
+        HashTable ht_fnv1a(16384, HashFunc::FNV1A);
+
+        std::string token;
+        while (file >> token) {
+            std::string word = normalize(token);
+            if (!word.empty()) {
+                ++ref[word];
+                ht_djb2.increment(word);
+                ht_fnv1a.increment(word);
+            }
+        }
+
+        bool match_djb2 = true, match_fnv1a = true;
+        for (auto& [w, c] : ref) {
+            if (ht_djb2.get(w) != c)  { match_djb2  = false; break; }
+            if (ht_fnv1a.get(w) != c) { match_fnv1a = false; break; }
+        }
+
+        std::string label = path.substr(path.find_last_of('/') + 1);
+        ASSERT(match_djb2,
+               "djb2: todas as contagens corretas em " + label);
+        ASSERT(ht_djb2.size() == ref.size(),
+               "djb2: número de palavras únicas correto em " + label);
+        ASSERT(match_fnv1a,
+               "fnv1a: todas as contagens corretas em " + label);
+        ASSERT(ht_fnv1a.size() == ref.size(),
+               "fnv1a: número de palavras únicas correto em " + label);
+    }
+}
+
 // Main
 int main() {
     std::cout << "================================================\n";
@@ -219,6 +278,7 @@ int main() {
     test_collision_counting();
     test_edge_cases();
     test_bucket_distribution();
+    test_correctness_large_files();
 
     std::cout << "\n================================================\n";
     std::cout << " Resultado: " << passed << " OK, " << failed << " FALHOU\n";
