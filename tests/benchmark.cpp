@@ -23,6 +23,7 @@ struct BenchResult {
     std::string hash_func;
     std::string rng_method;
     size_t      input_size;
+    size_t      initial_capacity;
     size_t      unique_words;
     size_t      collisions;
     size_t      rehashes;
@@ -37,15 +38,17 @@ struct BenchResult {
 
 // Roda um benchmark e retorna resultado
 BenchResult run_bench(size_t n, uint64_t seed, HashFunc hf, RNG::Method rm,
-                      bool from_file, const std::string& filepath) {
+                      bool from_file, const std::string& filepath,
+                      size_t initial_capacity = 16384) {
     BenchResult r;
     r.hash_func  = (hf == HashFunc::DJB2) ? "djb2" : "fnv1a";
     r.rng_method = (rm == RNG::Method::LCG) ? "LCG" : "Xorshift64";
-    r.is_file    = from_file;
-    r.filename   = filepath;
-    r.input_size = n;
+    r.is_file           = from_file;
+    r.filename          = filepath;
+    r.input_size        = n;
+    r.initial_capacity  = initial_capacity;
 
-    WordCounter wc(16384, hf);
+    WordCounter wc(initial_capacity, hf);
 
     if (from_file) {
         std::ifstream f(filepath);
@@ -108,16 +111,25 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // 4. Impacto da capacidade inicial no rehash — djb2, n=10000, seed=42
+    std::vector<size_t> caps = {8, 16, 32, 64, 128, 256, 512, 1024, 16384};
+    for (size_t cap : caps) {
+        auto r = run_bench(10000, 42, HashFunc::DJB2, RNG::Method::LCG, false, "", cap);
+        r.label = "rehash_cap" + std::to_string(cap);
+        results.push_back(r);
+    }
+
     // Escreve JSON
     std::ofstream out(out_file);
     out << "[\n";
     for (size_t i = 0; i < results.size(); ++i) {
         auto& r = results[i];
         out << "  {\n";
-        out << "    " << jstr("label")        << ": " << jstr(r.label)        << ",\n";
-        out << "    " << jstr("hash_func")    << ": " << jstr(r.hash_func)    << ",\n";
-        out << "    " << jstr("rng_method")   << ": " << jstr(r.rng_method)   << ",\n";
-        out << "    " << jstr("input_size")   << ": " << r.input_size         << ",\n";
+        out << "    " << jstr("label")             << ": " << jstr(r.label)           << ",\n";
+        out << "    " << jstr("hash_func")         << ": " << jstr(r.hash_func)       << ",\n";
+        out << "    " << jstr("rng_method")        << ": " << jstr(r.rng_method)      << ",\n";
+        out << "    " << jstr("input_size")        << ": " << r.input_size            << ",\n";
+        out << "    " << jstr("initial_capacity")  << ": " << r.initial_capacity      << ",\n";
         out << "    " << jstr("unique_words") << ": " << r.unique_words       << ",\n";
         out << "    " << jstr("collisions")    << ": " << r.collisions         << ",\n";
         out << "    " << jstr("rehashes")     << ": " << r.rehashes           << ",\n";

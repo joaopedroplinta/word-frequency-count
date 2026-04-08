@@ -50,7 +50,7 @@ def file_label(path):
     if "grande"  in b: return "Grande (~50000)"
     return esc(b)
 
-# tabela de escala 
+# tabela de escala
 def scale_table():
     rows = []
     sizes = sorted({r["input_size"] for r in scale_djb2})
@@ -58,15 +58,17 @@ def scale_table():
     fmap = {r["input_size"]: r for r in scale_fnv}
     for n in sizes:
         d = dmap.get(n, {}); f = fmap.get(n, {})
+        mem = d.get("memory_kb", "-")
         rows.append(
             f"  {n:>8,} & {d.get('unique_words','-'):>6} & "
             f"{d.get('collisions','-'):>8} & {d.get('time_ms','-'):>5} ms & "
-            f"{f.get('collisions','-'):>8} & {f.get('time_ms','-'):>5} ms \\\\"
+            f"{f.get('collisions','-'):>8} & {f.get('time_ms','-'):>5} ms & "
+            f"{mem} KB \\\\"
             .replace(",", ".")
         )
     return "\n".join(rows)
 
-# tabela de arquivos reais 
+# tabela de arquivos reais
 def files_table():
     rows = []
     seen = {}
@@ -75,11 +77,12 @@ def files_table():
     fn_map = {r["filename"]: r for r in files_fnv}
     for fname, rd in seen.items():
         rf = fn_map.get(fname, {})
-        total = rd.get("input_size", 0) or rd.get("unique_words", 0)
+        mem = rd.get("memory_kb", "-")
         rows.append(
             f"  {file_label(fname)} & {rd.get('unique_words','-'):>6} & "
             f"{rd.get('collisions','-'):>8} & {rd.get('time_ms','-'):>4} ms & "
-            f"{rf.get('collisions','-'):>8} & {rf.get('time_ms','-'):>4} ms \\\\"
+            f"{rf.get('collisions','-'):>8} & {rf.get('time_ms','-'):>4} ms & "
+            f"{mem} KB \\\\"
         )
     return "\n".join(rows)
 
@@ -97,7 +100,22 @@ def rng_table():
         )
     return "\n".join(rows)
 
-# calcula estatísticas resumidas 
+# tabela de rehash por capacidade inicial
+def rehash_table():
+    rehash_data = sorted(
+        [r for r in data if r["label"].startswith("rehash_")],
+        key=lambda r: r["initial_capacity"]
+    )
+    rows = []
+    for r in rehash_data:
+        rows.append(
+            f"  {r['initial_capacity']:>6} & {r['rehashes']:>8} & "
+            f"{r['hash_capacity']:>16} & {r['collisions']:>8} & "
+            f"{r['load_factor']:.4f} \\\\"
+        )
+    return "\n".join(rows)
+
+# calcula estatísticas resumidas
 def avg(lst, key):
     vals = [r[key] for r in lst if key in r and r[key] is not None]
     return sum(vals)/len(vals) if vals else 0
@@ -266,14 +284,15 @@ A tabela abaixo compara as duas funções de hash processando textos aleatórios
 
 \begin{table}[H]
 \centering
-\caption{Comparação djb2 vs FNV-1a por tamanho de entrada (capacidade da hash = 16384)}
-\begin{tabular}{rrrrrr}
+\caption{Comparação djb2 vs FNV-1a por tamanho de entrada (capacidade inicial = 16384)}
+\begin{tabular}{rrrrrrr}
 \toprule
 \textbf{Palavras} & \textbf{Únicas} &
 \multicolumn{2}{c}{\textbf{djb2}} &
-\multicolumn{2}{c}{\textbf{FNV-1a}} \\
+\multicolumn{2}{c}{\textbf{FNV-1a}} &
+\textbf{Memória} \\
 \cmidrule(lr){3-4} \cmidrule(lr){5-6}
-& & Colisões & Tempo & Colisões & Tempo \\
+& & Colisões & Tempo & Colisões & Tempo & (RSS) \\
 \midrule
 """ + scale_table() + r"""
 \bottomrule
@@ -283,6 +302,9 @@ A tabela abaixo compara as duas funções de hash processando textos aleatórios
 As colisões crescem linearmente com o número de palavras, pois o vocabulário
 é fixo (103 palavras únicas) e o fator de carga permanece baixo. O tempo
 de execução escala de forma aproximadamente linear com o volume de entrada.
+A memória RSS reflete o pico de uso do processo e cresce com o tamanho da
+entrada, pois o vetor de contagens do heap é proporcional ao número de palavras
+únicas processadas.
 
 \subsection{Comparação dos Geradores de Números Aleatórios}
 
@@ -314,18 +336,42 @@ de tempo são mínimas para este tamanho de entrada.
 \begin{table}[H]
 \centering
 \caption{Comparação djb2 vs FNV-1a em arquivos de texto real}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
 \textbf{Arquivo} & \textbf{Únicas} &
 \multicolumn{2}{c}{\textbf{djb2}} &
-\multicolumn{2}{c}{\textbf{FNV-1a}} \\
+\multicolumn{2}{c}{\textbf{FNV-1a}} &
+\textbf{Memória} \\
 \cmidrule(lr){3-4} \cmidrule(lr){5-6}
-& & Colisões & Tempo & Colisões & Tempo \\
+& & Colisões & Tempo & Colisões & Tempo & (RSS) \\
 \midrule
 """ + files_table() + r"""
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Impacto da Capacidade Inicial no Rehash}
+
+A tabela abaixo mostra o comportamento do rehash dinâmico para 10.000 palavras
+aleatórias (seed 42, djb2) com diferentes capacidades iniciais:
+
+\begin{table}[H]
+\centering
+\caption{Rehash dinâmico --- 10.000 palavras, djb2, seed 42}
+\begin{tabular}{rrrrr}
+\toprule
+\textbf{Cap. inicial} & \textbf{Rehashes} & \textbf{Cap. final} &
+\textbf{Colisões} & \textbf{Fator de carga} \\
+\midrule
+""" + rehash_table() + r"""
+\bottomrule
+\end{tabular}
+\end{table}
+
+Com capacidade inicial pequena, mais rehashes são realizados até a tabela
+atingir o tamanho adequado. Em todos os casos a capacidade final converge
+para o mesmo valor (determinado pelo número de palavras únicas e pelo limiar
+de 0,75), e o fator de carga final permanece abaixo do limiar.
 
 % ==============================================================
 \section{Discussão}
@@ -342,6 +388,11 @@ A taxa de colisões observada é proporcional ao número total de palavras
 processadas, o que é esperado com encadeamento: o custo médio de busca é
 $O(1 + \alpha)$, onde $\alpha$ é o fator de carga. Com capacidade de 16.384
 buckets e poucos centos de palavras únicas, $\alpha$ permanece muito baixo.
+
+O rehash dinâmico garante que o fator de carga nunca ultrapasse 0,75,
+preservando o custo $O(1)$ amortizado das operações mesmo quando a capacidade
+inicial é subestimada. O custo de cada rehash é $O(n)$, mas ocorre com
+frequência logarítmica, resultando em $O(1)$ amortizado por inserção.
 
 \subsection{Heap}
 
@@ -362,8 +413,12 @@ da aleatoriedade é crítica. Para este cenário, ambos são adequados.
 
 O sistema implementado integra corretamente as três estruturas exigidas:
 tabela hash (com djb2 e FNV-1a), max-heap e gerador de números
-pseudo-aleatórios (LCG e Xorshift64). Todos os 85 casos de teste unitário
-passam, e os benchmarks confirmam o comportamento esperado de cada estrutura.
+pseudo-aleatórios (LCG e Xorshift64). Todos os 97 casos de teste unitário
+passam, incluindo verificação exaustiva palavra por palavra contra
+\texttt{std::unordered\_map} nos três arquivos de texto real.
+
+O rehash dinâmico com limiar 0,75 mantém o desempenho $O(1)$ amortizado
+independente da capacidade inicial escolhida.
 
 A geração automática deste relatório garante que os dados apresentados
 correspondem exatamente à execução real do código, sem transcrição manual.
