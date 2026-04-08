@@ -155,9 +155,11 @@ Requer Python 3 e `pdflatex` (TeX Live) instalados.
 Para cada execução com `--stats`, o programa reporta:
 
 - Número de inserções e colisões na tabela hash
+- Número de rehashes realizados e capacidade final da tabela
 - Fator de carga da tabela hash
 - Número de operações no heap
 - Tempo total de execução (em milissegundos)
+- Uso de memória RSS do processo (em KB)
 
 ---
 

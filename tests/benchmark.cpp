@@ -25,9 +25,12 @@ struct BenchResult {
     size_t      input_size;
     size_t      unique_words;
     size_t      collisions;
+    size_t      rehashes;
+    size_t      hash_capacity;
     double      load_factor;
     size_t      heap_ops;
     long long   time_ms;
+    long        memory_kb;
     bool        is_file;
     std::string filename;
 };
@@ -56,11 +59,14 @@ BenchResult run_bench(size_t n, uint64_t seed, HashFunc hf, RNG::Method rm,
     auto top = wc.top_k(10);
 
     auto& st = wc.stats();
-    r.unique_words = st.unique_words;
-    r.collisions   = st.hash_collisions;
-    r.load_factor  = st.load_factor;
-    r.heap_ops     = st.heap_ops;
-    r.time_ms      = st.time_ms;
+    r.unique_words  = st.unique_words;
+    r.collisions    = st.hash_collisions;
+    r.rehashes      = st.hash_rehashes;
+    r.hash_capacity = st.hash_capacity;
+    r.load_factor   = st.load_factor;
+    r.heap_ops      = st.heap_ops;
+    r.time_ms       = st.time_ms;
+    r.memory_kb     = st.memory_kb;
     r.label        = r.hash_func + "+" + r.rng_method + "_n" + std::to_string(n);
     return r;
 }
@@ -113,10 +119,13 @@ int main(int argc, char* argv[]) {
         out << "    " << jstr("rng_method")   << ": " << jstr(r.rng_method)   << ",\n";
         out << "    " << jstr("input_size")   << ": " << r.input_size         << ",\n";
         out << "    " << jstr("unique_words") << ": " << r.unique_words       << ",\n";
-        out << "    " << jstr("collisions")   << ": " << r.collisions         << ",\n";
+        out << "    " << jstr("collisions")    << ": " << r.collisions         << ",\n";
+        out << "    " << jstr("rehashes")     << ": " << r.rehashes           << ",\n";
+        out << "    " << jstr("hash_capacity")<< ": " << r.hash_capacity      << ",\n";
         out << "    " << jstr("load_factor")  << ": " << jf(r.load_factor)    << ",\n";
         out << "    " << jstr("heap_ops")     << ": " << r.heap_ops           << ",\n";
         out << "    " << jstr("time_ms")      << ": " << r.time_ms            << ",\n";
+        out << "    " << jstr("memory_kb")    << ": " << r.memory_kb          << ",\n";
         out << "    " << jstr("is_file")      << ": " << (r.is_file?"true":"false") << ",\n";
         out << "    " << jstr("filename")     << ": " << jstr(r.filename)     << "\n";
         out << "  }" << (i + 1 < results.size() ? "," : "") << "\n";
