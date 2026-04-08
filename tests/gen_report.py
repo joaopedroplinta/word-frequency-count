@@ -299,12 +299,14 @@ A tabela abaixo compara as duas funções de hash processando textos aleatórios
 \end{tabular}
 \end{table}
 
-As colisões crescem linearmente com o número de palavras, pois o vocabulário
-é fixo (103 palavras únicas) e o fator de carga permanece baixo. O tempo
-de execução escala de forma aproximadamente linear com o volume de entrada.
-A memória RSS reflete o pico de uso do processo e cresce com o tamanho da
-entrada, pois o vetor de contagens do heap é proporcional ao número de palavras
-únicas processadas.
+Com capacidade inicial de 16.384 e apenas 103 palavras únicas no vocabulário
+sintético, o fator de carga permanece abaixo de 0,01 em todos os cenários,
+resultando em zero colisões independente do volume de entrada. O tempo de
+execução escala de forma aproximadamente linear com o número de palavras
+processadas. A memória RSS é medida via \texttt{getrusage} e representa o
+pico acumulado do processo; como o vocabulário é fixo, as estruturas de dados
+crescem pouco entre cenários e a variação de RSS reflete principalmente
+alocações internas do sistema operacional.
 
 \subsection{Comparação dos Geradores de Números Aleatórios}
 
@@ -349,6 +351,11 @@ de tempo são mínimas para este tamanho de entrada.
 \bottomrule
 \end{tabular}
 \end{table}
+
+Os arquivos médio e grande foram gerados sinteticamente a partir do mesmo vocabulário
+de aproximadamente 244 palavras, razão pela qual o número de palavras únicas converge
+para o mesmo valor mesmo com volume 10$\times$ maior. O arquivo pequeno, gerado
+independentemente, possui vocabulário ligeiramente menor (207 palavras únicas).
 
 \subsection{Impacto da Capacidade Inicial no Rehash}
 
