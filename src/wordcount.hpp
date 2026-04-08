@@ -13,9 +13,12 @@ struct RunStats {
     size_t hash_inserts   = 0;
     size_t hash_lookups   = 0;
     size_t hash_collisions= 0;
+    size_t hash_rehashes  = 0;
+    size_t hash_capacity  = 0;
     size_t heap_ops       = 0;
     double load_factor    = 0.0;
-    long long time_ms     = 0;  
+    long long time_ms     = 0;
+    long   memory_kb    = 0;
 };
 
 class WordCounter {

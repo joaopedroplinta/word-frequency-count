@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <memory>
 #include <cstdint>
 #include <cstddef>
 
@@ -23,7 +24,7 @@ enum class HashFunc { DJB2, FNV1A };
 struct HashEntry {
     std::string key;
     int count = 0;
-    HashEntry* next = nullptr;
+    std::unique_ptr<HashEntry> next;
 
     HashEntry(const std::string& k, int c) : key(k), count(c) {}
 };
@@ -31,8 +32,9 @@ struct HashEntry {
 struct HashStats {
     size_t inserts      = 0;
     size_t lookups      = 0;
-    size_t collisions   = 0; 
+    size_t collisions   = 0;
     size_t unique_words = 0;
+    size_t rehashes     = 0;
 };
 
 class HashTable {
@@ -48,7 +50,7 @@ public:
     template<typename Fn>
     void for_each(Fn callback) const {
         for (size_t i = 0; i < capacity_; ++i) {
-            for (HashEntry* e = buckets_[i]; e != nullptr; e = e->next)
+            for (HashEntry* e = buckets_[i].get(); e != nullptr; e = e->next.get())
                 callback(e->key, e->count);
         }
     }
@@ -61,9 +63,10 @@ public:
 private:
     size_t capacity_;
     HashFunc func_;
-    std::vector<HashEntry*> buckets_;
+    std::vector<std::unique_ptr<HashEntry>> buckets_;
     mutable HashStats stats_;
 
+    void   rehash();
     size_t hash(const std::string& word) const;
     size_t djb2(const std::string& word) const;
     size_t fnv1a(const std::string& word) const;

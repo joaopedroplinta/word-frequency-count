@@ -141,16 +141,18 @@ void test_collision_counting() {
     for (auto func : {HashFunc::DJB2, HashFunc::FNV1A}) {
         const char* name = (func == HashFunc::DJB2) ? "djb2" : "fnv1a";
 
-        // Capacidade = 1 força colisão em toda inserção após a primeira
-        HashTable ht(1, func);
-        ht.increment("a");
-        ht.increment("b");
-        ht.increment("c");
+        // Inserir 200 palavras distintas com capacidade inicial 64.
+        // Nas primeiras ~48 inserções (antes do primeiro rehash) ocorrem colisões
+        // garantidas por volume (E[colisões] ≈ 17 nessa fase).
+        const int N = 200;
+        HashTable ht(64, func);
+        for (int i = 0; i < N; ++i)
+            ht.increment("word_" + std::to_string(i));
 
-        ASSERT(ht.stats().collisions >= 2,
-               std::string(name) + ": capacidade 1 gera colisões em toda inserção após primeira");
-        ASSERT(ht.stats().inserts == 3,
-               std::string(name) + ": 3 inserts registrados nas stats");
+        ASSERT(ht.stats().collisions > 0,
+               std::string(name) + ": 200 inserções geram colisões (verificado por volume)");
+        ASSERT(ht.stats().inserts == N,
+               std::string(name) + ": " + std::to_string(N) + " inserts registrados nas stats");
     }
 }
 

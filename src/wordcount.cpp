@@ -4,6 +4,13 @@
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
+#include <sys/resource.h>
+
+static long rss_kb() {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    return usage.ru_maxrss; // KB no Linux
+}
 
 // Vocabulário para geração de texto aleatório
 static const std::vector<std::string> VOCAB = {
@@ -46,12 +53,15 @@ void WordCounter::count_from_stream(std::istream& in) {
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    stats_.time_ms     = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+    stats_.time_ms        = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     stats_.unique_words   = table_.size();
     stats_.hash_inserts   = table_.stats().inserts;
     stats_.hash_lookups   = table_.stats().lookups;
     stats_.hash_collisions= table_.stats().collisions;
+    stats_.hash_rehashes  = table_.stats().rehashes;
+    stats_.hash_capacity  = table_.capacity();
     stats_.load_factor    = table_.load_factor();
+    stats_.memory_kb      = rss_kb();
 }
 
 void WordCounter::count_from_random(size_t num_words, RNG& rng) {
@@ -65,12 +75,15 @@ void WordCounter::count_from_random(size_t num_words, RNG& rng) {
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    stats_.time_ms     = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+    stats_.time_ms        = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     stats_.unique_words   = table_.size();
     stats_.hash_inserts   = table_.stats().inserts;
     stats_.hash_lookups   = table_.stats().lookups;
     stats_.hash_collisions= table_.stats().collisions;
+    stats_.hash_rehashes  = table_.stats().rehashes;
+    stats_.hash_capacity  = table_.capacity();
     stats_.load_factor    = table_.load_factor();
+    stats_.memory_kb      = rss_kb();
 }
 
 std::vector<HeapNode> WordCounter::top_k(size_t k) {
@@ -100,9 +113,12 @@ void WordCounter::print_stats() const {
     std::cout << std::left << std::setw(30) << "Palavras únicas:"      << stats_.unique_words    << "\n";
     std::cout << std::left << std::setw(30) << "Inserções na hash:"    << stats_.hash_inserts    << "\n";
     std::cout << std::left << std::setw(30) << "Colisões na hash:"     << stats_.hash_collisions << "\n";
+    std::cout << std::left << std::setw(30) << "Rehashes:"             << stats_.hash_rehashes   << "\n";
+    std::cout << std::left << std::setw(30) << "Capacidade final:"     << stats_.hash_capacity   << "\n";
     std::cout << std::left << std::setw(30) << "Fator de carga:"
               << std::fixed << std::setprecision(4) << stats_.load_factor << "\n";
     std::cout << std::left << std::setw(30) << "Operações no heap:"    << stats_.heap_ops        << "\n";
     std::cout << std::left << std::setw(30) << "Tempo total (ms):"     << stats_.time_ms         << "\n";
+    std::cout << std::left << std::setw(30) << "Memória RSS (KB):"     << stats_.memory_kb       << "\n";
     std::cout << "==================================\n";
 }
