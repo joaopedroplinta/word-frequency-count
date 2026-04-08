@@ -108,13 +108,16 @@ avg_col_fnv  = avg(scale_fnv,  "collisions") / max(avg(scale_fnv,  "input_size")
 avg_t_lcg    = avg(rng_lcg, "time_ms")
 avg_t_xor    = avg(rng_xor, "time_ms")
 
-date_str = datetime.date.today().strftime("%d de %B de %Y")
+_meses = ["janeiro","fevereiro","março","abril","maio","junho",
+          "julho","agosto","setembro","outubro","novembro","dezembro"]
+_hoje = datetime.date.today()
+date_str = f"{_hoje.day} de {_meses[_hoje.month - 1]} de {_hoje.year}"
 
 # ── template LaTeX ─────────────────────────────────────────────────────────────
 TEX = r"""
 \documentclass[12pt,a4paper]{article}
 \usepackage[T1]{fontenc}
-\usepackage[portuguese]{babel}
+\usepackage[brazil]{babel}
 \usepackage{geometry}
 \usepackage{booktabs}
 \usepackage{hyperref}
