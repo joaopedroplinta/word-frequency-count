@@ -87,18 +87,28 @@ void WordCounter::count_from_random(size_t num_words, RNG& rng) {
 }
 
 std::vector<HeapNode> WordCounter::top_k(size_t k) {
+    if (k == 0) return {};
+
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    // Coleta todos os pares (palavra, contagem) da hash
+    // Coleta todos os pares (palavra, contagem) da hash: O(n)
     std::vector<HeapNode> all;
     all.reserve(table_.size());
     table_.for_each([&](const std::string& w, int c) {
         all.emplace_back(w, c);
     });
 
-    // Constrói heap e extrai top-k
+    // Constrói heap via heapify: O(n)
     MaxHeap heap(std::move(all));
-    auto result = heap.top_k(k);
+
+    // Extrai os k maiores diretamente do heap local (sem cópia): O(k log n)
+    size_t limit = std::min(k, heap.size());
+    std::vector<HeapNode> result;
+    result.reserve(limit);
+    for (size_t i = 0; i < limit; ++i) {
+        result.push_back(heap.top());
+        heap.pop();
+    }
     stats_.heap_ops = heap.ops();
 
     auto t1 = std::chrono::high_resolution_clock::now();
