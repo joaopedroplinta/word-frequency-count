@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: sudo apt-get update && sudo apt-get install -y g++ make
+
+      - name: Compilar executável principal
+        run: make all
+
+      - name: Compilar testes
+        run: make tests
+
+      - name: Rodar test_rng
+        run: ./tests/test_rng
+
+      - name: Rodar test_hash
+        run: ./tests/test_hash
+
+      - name: Rodar test_heap
+        run: ./tests/test_heap
