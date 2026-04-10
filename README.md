@@ -27,6 +27,7 @@ Implementação de um sistema de **contagem de frequência de palavras** utiliza
 .
 ├── README.md                          # Este arquivo
 ├── relatorio.pdf                      # Relatório da equipe
+├── .github/workflows/ci.yml          # Pipeline de CI (GitHub Actions)
 ├── src/
 │   ├── hash.cpp / hash.hpp            # Tabela hash (djb2 e FNV-1a)
 │   ├── heap.cpp / heap.hpp            # Max-heap para top-k palavras
@@ -88,7 +89,7 @@ make clean
 | `-r <1\|2>` | Método de geração aleatória: 1=LCG, 2=Xorshift64 | 1 |
 | `-s <seed>` | Seed para geração de texto aleatório | 42 |
 | `-n <número>` | Número de palavras a gerar (modo aleatório) | 10000 |
-| `-c <número>` | Capacidade inicial da tabela hash | 16384 |
+| `-c <número>` | Capacidade inicial da tabela hash (>= 1) | 16384 |
 | `--random` | Gera texto aleatório em vez de ler arquivo | — |
 | `--stats` | Exibe estatísticas de desempenho | — |
 
@@ -112,16 +113,18 @@ make clean
 ### Executar todos os testes
 
 ```bash
+make tests
+```
+
+Ou via script de integração completo (inclui testes de escala e comparativos):
+
+```bash
 bash tests/run_tests.sh
 ```
 
-O script executa automaticamente os testes unitários, testes de escala,
-comparação entre funções de hash e geradores, e testes com arquivos reais —
-tudo com seeds fixas de `tests/seeds.txt` para reprodutibilidade.
-
 ### Testes disponíveis
 
-- **Testes unitários:** validam a corretude da hash, do heap e do RNG individualmente (97 casos no total), incluindo verificação exaustiva palavra por palavra contra `std::unordered_map` nos três arquivos reais.
+- **Testes unitários:** validam a corretude da hash, do heap e do RNG individualmente (100 casos no total), incluindo verificação exaustiva palavra por palavra contra `std::unordered_map` nos três arquivos reais e testes de validação de entrada.
 - **Testes de escala:** comparam djb2 e FNV-1a em entradas de 1.000 a 500.000 palavras.
 - **Testes comparativos:** LCG vs Xorshift64, texto real vs texto aleatório.
 
@@ -174,3 +177,7 @@ Para cada execução com `--stats`, o programa reporta:
 - [x] Lógica de contagem e integração das estruturas
 - [x] Scripts de teste reprodutíveis
 - [x] Análise de desempenho e relatório
+- [x] Validação de entradas inválidas (`-c 0`, `RNG::next_in(0)`)
+- [x] Extração top-k sem cópia desnecessária do heap (O(n + k log n))
+- [x] Comentários de complexidade nos métodos críticos
+- [x] Pipeline de CI com GitHub Actions
