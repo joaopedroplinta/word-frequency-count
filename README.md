@@ -27,6 +27,8 @@ Implementação de um sistema de **contagem de frequência de palavras** utiliza
 .
 ├── README.md                          # Este arquivo
 ├── relatorio.pdf                      # Relatório da equipe
+├── arquitetura.svg                    # Diagrama de arquitetura (vetorial)
+├── arquitetura.png                    # Diagrama de arquitetura (PNG para apresentação)
 ├── .github/workflows/ci.yml          # Pipeline de CI (GitHub Actions)
 ├── src/
 │   ├── hash.cpp / hash.hpp            # Tabela hash (djb2 e FNV-1a)
@@ -181,3 +183,4 @@ Para cada execução com `--stats`, o programa reporta:
 - [x] Extração top-k sem cópia desnecessária do heap (O(n + k log n))
 - [x] Comentários de complexidade nos métodos críticos
 - [x] Pipeline de CI com GitHub Actions
+- [x] Diagrama de arquitetura (`arquitetura.svg` / `arquitetura.png`)
