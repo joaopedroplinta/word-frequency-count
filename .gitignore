@@ -59,3 +59,6 @@ generated_*.txt
 
 # Não incluir o zip final de entrega no repositório
 *.zip
+
+# Notas internas (uso do assistente)
+CLAUDE.md

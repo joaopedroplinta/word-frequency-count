@@ -72,5 +72,6 @@ zip: relatorio.pdf
 	    --exclude "relatorio.out" \
 	    --exclude ".git/*" \
 	    --exclude ".github/*" \
+	    --exclude "CLAUDE.md" \
 	    --exclude "*.zip"
 	@echo "[zip] Pronto: ../$(ZIP_NAME).zip"
