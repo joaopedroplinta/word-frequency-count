@@ -12,7 +12,9 @@ TEST_HEAP   = $(TESTDIR)/test_heap
 TEST_RNG    = $(TESTDIR)/test_rng
 BENCHMARK   = $(TESTDIR)/benchmark
 
-.PHONY: all clean debug tests report
+ZIP_NAME = jpshp-omd
+
+.PHONY: all clean debug tests report zip
 
 all: $(TARGET)
 
@@ -51,4 +53,24 @@ debug: $(TARGET)
 
 clean:
 	rm -f $(TARGET) $(TEST_HASH) $(TEST_HEAP) $(TEST_RNG) $(BENCHMARK)
-	rm -f benchmark_results.json relatorio.tex relatorio.pdf relatorio.aux relatorio.log relatorio.toc relatorio.out
+	rm -f benchmark_results.json relatorio.tex relatorio.aux relatorio.log relatorio.toc relatorio.out
+
+zip: relatorio.pdf
+	@echo "[zip] Gerando $(ZIP_NAME).zip..."
+	@zip -r ../$(ZIP_NAME).zip . \
+	    --exclude "*.o" \
+	    --exclude "$(TARGET)" \
+	    --exclude "$(TEST_HASH)" \
+	    --exclude "$(TEST_HEAP)" \
+	    --exclude "$(TEST_RNG)" \
+	    --exclude "$(BENCHMARK)" \
+	    --exclude "benchmark_results.json" \
+	    --exclude "relatorio.tex" \
+	    --exclude "relatorio.aux" \
+	    --exclude "relatorio.log" \
+	    --exclude "relatorio.toc" \
+	    --exclude "relatorio.out" \
+	    --exclude ".git/*" \
+	    --exclude ".github/*" \
+	    --exclude "*.zip"
+	@echo "[zip] Pronto: ../$(ZIP_NAME).zip"
