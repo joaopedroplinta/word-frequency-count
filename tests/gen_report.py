@@ -413,9 +413,10 @@ da aleatoriedade é crítica. Para este cenário, ambos são adequados.
 
 O sistema implementado integra corretamente as três estruturas exigidas:
 tabela hash (com djb2 e FNV-1a), max-heap e gerador de números
-pseudo-aleatórios (LCG e Xorshift64). Todos os 97 casos de teste unitário
+pseudo-aleatórios (LCG e Xorshift64). Todos os 100 casos de teste unitário
 passam, incluindo verificação exaustiva palavra por palavra contra
-\texttt{std::unordered\_map} nos três arquivos de texto real.
+\texttt{std::unordered\_map} nos três arquivos de texto real, além de
+validação de entradas inválidas (capacidade zero e intervalo nulo no RNG).
 
 O rehash dinâmico com limiar 0,75 mantém o desempenho $O(1)$ amortizado
 independente da capacidade inicial escolhida.
