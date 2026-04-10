@@ -1,6 +1,7 @@
 #include "../src/hash.hpp"
 #include <iostream>
 #include <cassert>
+#include <stdexcept>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -158,7 +159,7 @@ void test_collision_counting() {
     }
 }
 
-// T7: Palavras com caracteres variados
+// T7: Palavras com caracteres variados e validação de construção
 void test_edge_cases() {
     std::cout << "\n[T7] Casos extremos\n";
 
@@ -181,6 +182,12 @@ void test_edge_cases() {
         ASSERT(ht.get("prefixo_a") == 1 && ht.get("prefixo_b") == 1,
                std::string(name) + ": palavras similares armazenadas separadamente");
     }
+
+    // Capacidade 0 deve lançar invalid_argument
+    bool threw = false;
+    try { HashTable ht_zero(0, HashFunc::DJB2); }
+    catch (const std::invalid_argument&) { threw = true; }
+    ASSERT(threw, "capacidade 0 lança invalid_argument");
 }
 
 // T8: Distribuição dos buckets — nenhum bucket com mais de 5x a média
