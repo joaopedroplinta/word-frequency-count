@@ -11,11 +11,13 @@ MaxHeap::MaxHeap(std::vector<HeapNode> data) : data_(std::move(data)) {
         sift_down(static_cast<size_t>(i));
 }
 
+// Insere elemento e restaura propriedade do heap. O(log n).
 void MaxHeap::push(const std::string& word, int count) {
     data_.emplace_back(word, count);
     sift_up(data_.size() - 1);
 }
 
+// Remove o maior elemento. O(log n).
 void MaxHeap::pop() {
     if (data_.empty()) throw std::underflow_error("Heap vazio");
     std::swap(data_.front(), data_.back());

@@ -31,6 +31,7 @@ size_t HashTable::hash(const std::string& word) const {
     return (func_ == HashFunc::DJB2) ? djb2(word) : fnv1a(word);
 }
 
+// Incrementa a contagem de uma palavra. O(1) amortizado; O(n) no rehash.
 void HashTable::increment(const std::string& word) {
     ++stats_.inserts;
     size_t idx = hash(word);
@@ -55,6 +56,7 @@ void HashTable::increment(const std::string& word) {
     if (load_factor() > 0.75) rehash();
 }
 
+// Dobra a capacidade e redistribui todas as entradas. O(n).
 void HashTable::rehash() {
     size_t new_capacity = capacity_ * 2;
     std::vector<std::unique_ptr<HashEntry>> new_buckets(new_capacity);
@@ -86,6 +88,7 @@ void HashTable::rehash() {
     ++stats_.rehashes;
 }
 
+// Retorna a contagem da palavra, ou 0 se ausente. O(1) médio.
 int HashTable::get(const std::string& word) const {
     ++stats_.lookups;
     size_t idx = hash(word);
