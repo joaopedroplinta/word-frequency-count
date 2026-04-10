@@ -2,7 +2,10 @@
 #include <stdexcept>
 
 HashTable::HashTable(size_t capacity, HashFunc func)
-    : capacity_(capacity), func_(func), buckets_(capacity) {}
+    : capacity_(capacity), func_(func), buckets_(capacity) {
+    if (capacity == 0)
+        throw std::invalid_argument("HashTable: capacidade deve ser >= 1");
+}
 
 HashTable::~HashTable() = default;
 

@@ -1,4 +1,5 @@
 #include "rng.hpp"
+#include <stdexcept>
 
 uint64_t RNG::lcg() {
     state_ = 6364136223846793005ULL * state_ + 1442695040888963407ULL;
@@ -18,6 +19,8 @@ uint64_t RNG::next() {
 }
 
 uint64_t RNG::next_in(uint64_t n) {
+    if (n == 0)
+        throw std::invalid_argument("RNG::next_in: n deve ser >= 1");
     return next() % n;
 }
 
