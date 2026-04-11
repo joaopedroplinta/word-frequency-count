@@ -299,9 +299,15 @@ A tabela abaixo compara as duas funções de hash processando textos aleatórios
 \end{tabular}
 \end{table}
 
-As colisões crescem linearmente com o número de palavras, pois o vocabulário
-é fixo (103 palavras únicas) e o fator de carga permanece baixo. O tempo
-de execução escala de forma aproximadamente linear com o volume de entrada.
+Com 103 palavras únicas distribuídas em 16.384 buckets, o fator de carga
+é $\approx 0{,}006$. Pelo problema do aniversário, o número esperado de
+colisões estruturais de bucket é $\frac{103^2}{2 \times 16384} \approx 0{,}3$,
+o que explica os valores próximos de zero observados na tabela.
+O tempo de execução escala de forma aproximadamente linear com o volume de
+entrada, pois cada palavra exige uma operação $O(1)$ amortizado na tabela hash.
+O impacto de colisões estruturais é mais evidente na Tabela~4 (rehash),
+onde capacidades iniciais menores forçam múltiplos rehashes e acumulam
+colisões durante as fases intermediárias de preenchimento.
 A memória RSS reflete o pico de uso do processo e cresce com o tamanho da
 entrada, pois o vetor de contagens do heap é proporcional ao número de palavras
 únicas processadas.
@@ -384,10 +390,15 @@ deste trabalho. A FNV-1a tende a produzir distribuições ligeiramente mais
 uniformes em vocabulários com prefixos similares (como \texttt{palavra\_0},
 \texttt{palavra\_1}, ...), resultado do efeito avalanche.
 
-A taxa de colisões observada é proporcional ao número total de palavras
-processadas, o que é esperado com encadeamento: o custo médio de busca é
-$O(1 + \alpha)$, onde $\alpha$ é o fator de carga. Com capacidade de 16.384
-buckets e poucos centos de palavras únicas, $\alpha$ permanece muito baixo.
+Com encadeamento externo, o custo médio de busca é $O(1 + \alpha)$, onde
+$\alpha$ é o fator de carga. Com 16.384 buckets e apenas 103 palavras únicas
+($\alpha \approx 0{,}006$), colisões estruturais de bucket são extremamente
+raras --- o que é confirmado pelos dados da Tabela~1. Esse resultado é
+esperado: pelo problema do aniversário, a probabilidade de dois elementos
+caírem no mesmo bucket é proporcional a $n^2 / 2m$, que com $n{=}103$ e
+$m{=}16384$ resulta em esperança $\approx 0{,}3$. O impacto de colisões
+estruturais é observado na Tabela~4 (rehash com capacidades iniciais
+pequenas), onde os buckets se enchem antes de cada redistribuição.
 
 O rehash dinâmico garante que o fator de carga nunca ultrapasse 0,75,
 preservando o custo $O(1)$ amortizado das operações mesmo quando a capacidade

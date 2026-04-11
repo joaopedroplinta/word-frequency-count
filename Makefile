@@ -57,21 +57,26 @@ clean:
 
 zip: relatorio.pdf
 	@echo "[zip] Gerando $(ZIP_NAME).zip..."
-	@zip -r ../$(ZIP_NAME).zip . \
-	    --exclude "*.o" \
-	    --exclude "$(TARGET)" \
-	    --exclude "$(TEST_HASH)" \
-	    --exclude "$(TEST_HEAP)" \
-	    --exclude "$(TEST_RNG)" \
-	    --exclude "$(BENCHMARK)" \
-	    --exclude "benchmark_results.json" \
-	    --exclude "relatorio.tex" \
-	    --exclude "relatorio.aux" \
-	    --exclude "relatorio.log" \
-	    --exclude "relatorio.toc" \
-	    --exclude "relatorio.out" \
-	    --exclude ".git/*" \
-	    --exclude ".github/*" \
-	    --exclude "CLAUDE.md" \
-	    --exclude "*.zip"
+	@PARENT=$$(cd .. && pwd); \
+	 rm -rf $$PARENT/$(ZIP_NAME); \
+	 mkdir -p $$PARENT/$(ZIP_NAME); \
+	 cp -r . $$PARENT/$(ZIP_NAME)/; \
+	 rm -rf $$PARENT/$(ZIP_NAME)/.git \
+	        $$PARENT/$(ZIP_NAME)/.github \
+	        $$PARENT/$(ZIP_NAME)/CLAUDE.md; \
+	 rm -f  $$PARENT/$(ZIP_NAME)/$(TARGET) \
+	        $$PARENT/$(ZIP_NAME)/$(TEST_HASH) \
+	        $$PARENT/$(ZIP_NAME)/$(TEST_HEAP) \
+	        $$PARENT/$(ZIP_NAME)/$(TEST_RNG) \
+	        $$PARENT/$(ZIP_NAME)/$(BENCHMARK) \
+	        $$PARENT/$(ZIP_NAME)/benchmark_results.json \
+	        $$PARENT/$(ZIP_NAME)/relatorio.tex \
+	        $$PARENT/$(ZIP_NAME)/relatorio.aux \
+	        $$PARENT/$(ZIP_NAME)/relatorio.log \
+	        $$PARENT/$(ZIP_NAME)/relatorio.toc \
+	        $$PARENT/$(ZIP_NAME)/relatorio.out; \
+	 find $$PARENT/$(ZIP_NAME) -name "*.zip" -delete; \
+	 rm -f $$PARENT/$(ZIP_NAME).zip; \
+	 cd $$PARENT && zip -r $(ZIP_NAME).zip $(ZIP_NAME); \
+	 rm -rf $$PARENT/$(ZIP_NAME)
 	@echo "[zip] Pronto: ../$(ZIP_NAME).zip"
