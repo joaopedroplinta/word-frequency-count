@@ -1,6 +1,7 @@
 #include "../src/rng.hpp"
 #include <iostream>
 #include <cassert>
+#include <stdexcept>
 #include <cmath>
 #include <vector>
 #include <algorithm>
@@ -152,10 +153,25 @@ void test_no_zero_state() {
     }
 }
 
-// T7: Comparação de período aparente — Xorshift deve ter
+// T7: next_in(0) deve lançar invalid_argument
+void test_next_in_zero() {
+    std::cout << "\n[T7] next_in(0) lança invalid_argument\n";
+
+    for (auto method : {RNG::Method::LCG, RNG::Method::XORSHIFT}) {
+        const char* name = (method == RNG::Method::LCG) ? "LCG" : "Xorshift";
+        RNG rng(42, method);
+
+        bool threw = false;
+        try { rng.next_in(0); }
+        catch (const std::invalid_argument&) { threw = true; }
+        ASSERT(threw, std::string(name) + ": next_in(0) lança invalid_argument");
+    }
+}
+
+// T8: Comparação de período aparente — Xorshift deve ter
 //     período muito maior que LCG para sequências curtas
 void test_non_repeating() {
-    std::cout << "\n[T7] Ausência de repetições em janela de 10000 valores\n";
+    std::cout << "\n[T8] Ausência de repetições em janela de 10000 valores\n";
 
     for (auto method : {RNG::Method::LCG, RNG::Method::XORSHIFT}) {
         const char* name = (method == RNG::Method::LCG) ? "LCG" : "Xorshift";
@@ -183,6 +199,7 @@ int main() {
     test_double_range();
     test_distribution();
     test_no_zero_state();
+    test_next_in_zero();
     test_non_repeating();
 
     std::cout << "\n================================================\n";

@@ -46,7 +46,11 @@ int main(int argc, char* argv[]) {
         else if (arg == "-r" && i + 1 < argc) { rng_meth  = std::stoi(argv[++i]); }
         else if (arg == "-s" && i + 1 < argc) { seed      = std::stoull(argv[++i]); }
         else if (arg == "-n" && i + 1 < argc) { num_words = std::stoull(argv[++i]); }
-        else if (arg == "-c" && i + 1 < argc) { capacity  = std::stoull(argv[++i]); }
+        else if (arg == "-c" && i + 1 < argc) {
+            long long c = std::stoll(argv[++i]);
+            if (c <= 0) { std::cerr << "Erro: capacidade deve ser >= 1\n"; return 1; }
+            capacity = static_cast<size_t>(c);
+        }
         else { std::cerr << "Argumento desconhecido: " << arg << "\n"; usage(argv[0]); return 1; }
     }
 

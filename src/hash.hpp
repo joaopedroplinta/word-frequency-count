@@ -43,7 +43,9 @@ public:
 
     int get(const std::string& word) const;
 
-    // Itera sobre todos os pares (palavra, contagem)
+    // Itera sobre todos os pares (palavra, contagem). O(capacidade + n).
+    // ATENÇÃO: não chame increment() dentro do callback — um rehash durante
+    // a iteração invalida os ponteiros internos dos buckets.
     template<typename Fn>
     void for_each(Fn callback) const {
         for (size_t i = 0; i < capacity_; ++i) {
