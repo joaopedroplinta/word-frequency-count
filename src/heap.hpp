@@ -3,6 +3,9 @@
 #include <vector>
 #include <cstddef>
 
+// Max-heap genérico baseado em vetor.
+// Invariante: data_[i] >= data_[2i+1] e data_[i] >= data_[2i+2]
+// (o nó pai é sempre maior ou igual aos filhos)
 
 struct HeapNode {
     std::string word;
@@ -34,8 +37,8 @@ private:
     std::vector<HeapNode> data_;
     mutable size_t ops_ = 0;
 
-    void sift_up(size_t idx);
-    void sift_down(size_t idx);
+    void sift_up(size_t idx);   // sobe idx enquanto maior que o pai (restaura após push)
+    void sift_down(size_t idx); // desce idx trocando com o maior filho (restaura após pop)
 
     size_t parent(size_t i) const { return (i - 1) / 2; }
     size_t left(size_t i)   const { return 2 * i + 1; }

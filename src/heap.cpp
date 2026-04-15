@@ -30,6 +30,7 @@ const HeapNode& MaxHeap::top() const {
     return data_.front();
 }
 
+// Sobe o nó idx enquanto ele for maior que seu pai, restaurando o invariante do heap.
 void MaxHeap::sift_up(size_t idx) {
     while (idx > 0) {
         size_t p = parent(idx);
@@ -41,6 +42,7 @@ void MaxHeap::sift_up(size_t idx) {
     }
 }
 
+// Desce o nó idx trocando-o com o maior filho até que o invariante seja restaurado.
 void MaxHeap::sift_down(size_t idx) {
     size_t n = data_.size();
     while (true) {
@@ -50,7 +52,7 @@ void MaxHeap::sift_down(size_t idx) {
         ++ops_;
         if (l < n && data_[l] > data_[largest]) largest = l;
         if (r < n && data_[r] > data_[largest]) largest = r;
-        if (largest == idx) break;
+        if (largest == idx) break; // nó já é maior que ambos os filhos
         std::swap(data_[idx], data_[largest]);
         idx = largest;
     }
