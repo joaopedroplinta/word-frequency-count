@@ -12,9 +12,16 @@ TEST_HEAP   = $(TESTDIR)/test_heap
 TEST_RNG    = $(TESTDIR)/test_rng
 BENCHMARK   = $(TESTDIR)/benchmark
 
+# GUI (Qt6)
+MOC        = /usr/lib/qt6/moc
+QT_CFLAGS  = $(shell pkg-config --cflags Qt6Widgets)
+QT_LIBS    = $(shell pkg-config --libs Qt6Widgets)
+GUI_TARGET = wordcount_gui
+GUI_MOC    = $(SRCDIR)/moc_main_window.cpp
+
 ZIP_NAME = jpshp-omd
 
-.PHONY: all clean debug tests report zip
+.PHONY: all clean debug tests report zip gui
 
 all: $(TARGET)
 
@@ -48,11 +55,20 @@ report: $(BENCHMARK)
 	@python3 $(TESTDIR)/gen_report.py --json benchmark_results.json --out .
 	@echo "[report] Pronto: relatorio.pdf"
 
+$(GUI_MOC): $(SRCDIR)/main_window.hpp
+	$(MOC) $< -o $@
+
+$(GUI_TARGET): $(SRCDIR)/gui_main.cpp $(SRCDIR)/main_window.cpp $(GUI_MOC) $(SHARED_SRCS)
+	$(CXX) $(CXXFLAGS) -fPIC $(QT_CFLAGS) -o $@ $^ $(QT_LIBS)
+
+gui: $(GUI_TARGET)
+
 debug: CXXFLAGS += -g -DDEBUG -O0
 debug: $(TARGET)
 
 clean:
-	rm -f $(TARGET) $(TEST_HASH) $(TEST_HEAP) $(TEST_RNG) $(BENCHMARK)
+	rm -f $(TARGET) $(TEST_HASH) $(TEST_HEAP) $(TEST_RNG) $(BENCHMARK) $(GUI_TARGET)
+	rm -f $(GUI_MOC)
 	rm -f benchmark_results.json relatorio.tex relatorio.aux relatorio.log relatorio.toc relatorio.out
 
 zip: relatorio.pdf
@@ -69,6 +85,8 @@ zip: relatorio.pdf
 	        $$PARENT/$(ZIP_NAME)/$(TEST_HEAP) \
 	        $$PARENT/$(ZIP_NAME)/$(TEST_RNG) \
 	        $$PARENT/$(ZIP_NAME)/$(BENCHMARK) \
+	        $$PARENT/$(ZIP_NAME)/$(GUI_TARGET) \
+	        $$PARENT/$(ZIP_NAME)/$(GUI_MOC) \
 	        $$PARENT/$(ZIP_NAME)/benchmark_results.json \
 	        $$PARENT/$(ZIP_NAME)/relatorio.tex \
 	        $$PARENT/$(ZIP_NAME)/relatorio.aux \
