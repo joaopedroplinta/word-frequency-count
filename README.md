@@ -35,7 +35,9 @@ Implementação de um sistema de **contagem de frequência de palavras** utiliza
 │   ├── heap.cpp / heap.hpp            # Max-heap para top-k palavras
 │   ├── rng.cpp / rng.hpp              # Gerador de números aleatórios (LCG e Xorshift64)
 │   ├── wordcount.cpp / wordcount.hpp  # Lógica principal de contagem de palavras
-│   └── main.cpp                       # Ponto de entrada do programa
+│   ├── main.cpp                       # Ponto de entrada da interface de linha de comando
+│   ├── main_window.cpp / main_window.hpp  # Janela principal da interface gráfica (Qt6)
+│   └── gui_main.cpp                   # Ponto de entrada da interface gráfica
 ├── tests/
 │   ├── run_tests.sh                   # Script principal para execução de todos os testes
 │   ├── test_hash.cpp                  # Testes unitários da tabela hash
@@ -56,18 +58,16 @@ Implementação de um sistema de **contagem de frequência de palavras** utiliza
 ## Compilação
 
 ```bash
+# Interface de linha de comando
 make
-```
 
-Para compilar em modo debug:
+# Interface gráfica (requer Qt6)
+make gui
 
-```bash
+# Modo debug
 make debug
-```
 
-Para limpar os arquivos compilados:
-
-```bash
+# Limpar arquivos compilados
 make clean
 ```
 
@@ -75,36 +75,62 @@ make clean
 
 ## Execução
 
-### Uso básico
+O projeto oferece duas interfaces: linha de comando e gráfica (GUI).
+
+### Interface Gráfica (GUI)
+
+```bash
+./wordcount_gui
+```
+
+A janela exibe dois painéis:
+
+- **Esquerdo — Configurações:** seleção de fonte (arquivo ou aleatório), parâmetros de consulta (k, offset, mais/menos frequentes), função de hash, capacidade inicial e método RNG.
+- **Direito — Resultados:** tabela com posição, palavra e frequência; painel de estatísticas atualizado a cada execução.
+
+> Requer Qt6 instalado (`qt6-base` ou equivalente na sua distribuição).
+
+### Interface de Linha de Comando (CLI)
 
 ```bash
 ./wordcount [opções]
 ```
 
-### Opções disponíveis
+#### Opções disponíveis
 
 | Opção | Descrição | Padrão |
 |---|---|---|
 | `-f <arquivo>` | Arquivo de texto de entrada | stdin |
-| `-k <número>` | Quantidade de palavras mais frequentes a exibir | 10 |
-| `-h <1\|2>` | Função de espalhamento da hash: 1=djb2, 2=FNV-1a | 1 |
-| `-r <1\|2>` | Método de geração aleatória: 1=LCG, 2=Xorshift64 | 1 |
-| `-s <seed>` | Seed para geração de texto aleatório | 42 |
+| `-k <número>` | Quantidade de palavras a exibir | 10 |
+| `-o <número>` | Offset: pular as primeiras N posições | 0 |
+| `-h <1\|2>` | Função de espalhamento: 1=djb2, 2=FNV-1a | 1 |
+| `-r <1\|2>` | Método RNG: 1=LCG, 2=Xorshift64 | 1 |
+| `-s <seed>` | Seed para geração aleatória | 42 |
 | `-n <número>` | Número de palavras a gerar (modo aleatório) | 10000 |
 | `-c <número>` | Capacidade inicial da tabela hash (>= 1) | 16384 |
 | `--random` | Gera texto aleatório em vez de ler arquivo | — |
+| `--bottom` | Exibe as palavras **menos** frequentes | — |
 | `--stats` | Exibe estatísticas de desempenho | — |
 
-### Exemplos
+#### Exemplos
 
 ```bash
-# Contar frequência a partir de um arquivo real, exibir top 20
-./wordcount -f inputs/texto_real_grande.txt -k 20 --stats
+# Top 10 palavras mais frequentes de um arquivo
+./wordcount -f inputs/texto_real_grande.txt -k 10
 
-# Gerar texto aleatório com seed fixa e contar frequência
+# Posições 11 a 20 (offset)
+./wordcount -f inputs/texto_real_grande.txt -k 10 -o 10
+
+# Top 10 palavras menos frequentes
+./wordcount -f inputs/texto_real_grande.txt --bottom -k 10
+
+# Posições 11 a 20 das menos frequentes
+./wordcount -f inputs/texto_real_grande.txt --bottom -k 10 -o 10
+
+# Texto aleatório com seed fixa, exibindo estatísticas
 ./wordcount --random -n 50000 -s 1234 -k 10 --stats
 
-# Usar função de espalhamento 2 com texto real
+# FNV-1a com texto real
 ./wordcount -f inputs/texto_real_medio.txt -h 2 -k 15 --stats
 ```
 
@@ -184,3 +210,6 @@ Para cada execução com `--stats`, o programa reporta:
 - [x] Comentários de complexidade nos métodos críticos
 - [x] Pipeline de CI com GitHub Actions
 - [x] Diagrama de arquitetura (`arquitetura.svg` / `arquitetura.png`)
+- [x] Suporte a offset para consultas em intervalos (ex: posições 11–20)
+- [x] Modo `--bottom` para as palavras menos frequentes
+- [x] Interface gráfica nativa (Qt6) com todos os controles e painel de estatísticas
