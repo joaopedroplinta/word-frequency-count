@@ -12,13 +12,16 @@ static void usage(const char* prog) {
         << "\n"
         << "Opções:\n"
         << "  -f <arquivo>   Arquivo de texto de entrada (padrão: stdin)\n"
-        << "  -k <n>         Exibir top-k palavras mais frequentes (padrão: 10)\n"
+        << "  -k <n>         Número de palavras a exibir (padrão: 10)\n"
+        << "  -o <n>         Offset: pular as primeiras n posições (padrão: 0)\n"
+        << "                 Ex: -k 10 -o 10  →  exibe posições 11-20\n"
         << "  -h <1|2>       Função de hash: 1=djb2, 2=fnv1a (padrão: 1)\n"
         << "  -r <1|2>       Gerador aleatório: 1=LCG, 2=Xorshift (padrão: 1)\n"
         << "  -s <seed>      Seed para geração aleatória (padrão: 42)\n"
         << "  -n <n>         Número de palavras aleatórias a gerar (padrão: 10000)\n"
         << "  -c <n>         Capacidade inicial da tabela hash (padrão: 16384)\n"
         << "  --random       Gerar texto aleatório em vez de ler arquivo\n"
+        << "  --bottom       Exibir as palavras MENOS frequentes\n"
         << "  --stats        Exibir estatísticas de desempenho\n"
         << "  --help         Exibir esta mensagem\n";
 }
@@ -26,13 +29,15 @@ static void usage(const char* prog) {
 int main(int argc, char* argv[]) {
     std::string filename  = "";
     size_t      top_k     = 10;
+    size_t      offset    = 0;
     int         hash_func = 1;
     int         rng_meth  = 1;
     uint64_t    seed      = 42;
     size_t      num_words = 10000;
     size_t      capacity  = 16384;
-    bool        random_mode = false;
-    bool        show_stats  = false;
+    bool        random_mode  = false;
+    bool        show_stats   = false;
+    bool        bottom_mode  = false;
 
     // Parse de argumentos
     for (int i = 1; i < argc; ++i) {
@@ -40,8 +45,10 @@ int main(int argc, char* argv[]) {
         if      (arg == "--help")   { usage(argv[0]); return 0; }
         else if (arg == "--random") { random_mode = true; }
         else if (arg == "--stats")  { show_stats = true; }
+        else if (arg == "--bottom") { bottom_mode = true; }
         else if (arg == "-f" && i + 1 < argc) { filename  = argv[++i]; }
         else if (arg == "-k" && i + 1 < argc) { top_k     = std::stoull(argv[++i]); }
+        else if (arg == "-o" && i + 1 < argc) { offset    = std::stoull(argv[++i]); }
         else if (arg == "-h" && i + 1 < argc) { hash_func = std::stoi(argv[++i]); }
         else if (arg == "-r" && i + 1 < argc) { rng_meth  = std::stoi(argv[++i]); }
         else if (arg == "-s" && i + 1 < argc) { seed      = std::stoull(argv[++i]); }
@@ -76,15 +83,24 @@ int main(int argc, char* argv[]) {
         wc.count_from_stream(std::cin);
     }
 
-    // Exibe top-k
-    auto results = wc.top_k(top_k);
-    std::cout << "\n--- Top " << top_k << " palavras mais frequentes ---\n";
+    // Exibe resultados
+    auto results = bottom_mode
+        ? wc.bottom_k(top_k, offset)
+        : wc.top_k(top_k, offset);
+
+    const char* label = bottom_mode ? "menos" : "mais";
+    if (offset > 0)
+        std::cout << "\n--- Posições " << (offset + 1) << "-" << (offset + top_k)
+                  << " palavras " << label << " frequentes ---\n";
+    else
+        std::cout << "\n--- Top " << top_k << " palavras " << label << " frequentes ---\n";
+
     std::cout << std::left << std::setw(5) << "#"
               << std::setw(25) << "Palavra"
               << "Freq\n";
     std::cout << std::string(40, '-') << "\n";
     for (size_t i = 0; i < results.size(); ++i) {
-        std::cout << std::left << std::setw(5) << (i + 1)
+        std::cout << std::left << std::setw(5) << (offset + i + 1)
                   << std::setw(25) << results[i].word
                   << results[i].count << "\n";
     }

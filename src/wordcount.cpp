@@ -86,7 +86,7 @@ void WordCounter::count_from_random(size_t num_words, RNG& rng) {
     stats_.memory_kb      = rss_kb();
 }
 
-std::vector<HeapNode> WordCounter::top_k(size_t k) {
+std::vector<HeapNode> WordCounter::top_k(size_t k, size_t offset) {
     if (k == 0) return {};
 
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -101,12 +101,12 @@ std::vector<HeapNode> WordCounter::top_k(size_t k) {
     // Constrói heap via heapify: O(n)
     MaxHeap heap(std::move(all));
 
-    // Extrai os k maiores diretamente do heap local (sem cópia): O(k log n)
-    size_t limit = std::min(k, heap.size());
-    std::vector<HeapNode> result;
-    result.reserve(limit);
-    for (size_t i = 0; i < limit; ++i) {
-        result.push_back(heap.top());
+    // Extrai os (offset + k) maiores diretamente do heap local: O((offset+k) log n)
+    size_t total = std::min(offset + k, heap.size());
+    std::vector<HeapNode> extracted;
+    extracted.reserve(total);
+    for (size_t i = 0; i < total; ++i) {
+        extracted.push_back(heap.top());
         heap.pop();
     }
     stats_.heap_ops = heap.ops();
@@ -114,7 +114,33 @@ std::vector<HeapNode> WordCounter::top_k(size_t k) {
     auto t1 = std::chrono::high_resolution_clock::now();
     stats_.time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 
-    return result;
+    // Retorna apenas a fatia [offset, offset+k)
+    if (offset >= extracted.size()) return {};
+    return std::vector<HeapNode>(extracted.begin() + offset, extracted.end());
+}
+
+std::vector<HeapNode> WordCounter::bottom_k(size_t k, size_t offset) {
+    if (k == 0) return {};
+
+    auto t0 = std::chrono::high_resolution_clock::now();
+
+    // Coleta todos os pares (palavra, contagem) da hash: O(n)
+    std::vector<HeapNode> all;
+    all.reserve(table_.size());
+    table_.for_each([&](const std::string& w, int c) {
+        all.emplace_back(w, c);
+    });
+
+    size_t total = std::min(offset + k, all.size());
+    // partial_sort ascendente para pegar os (offset+k) menores: O(n + (offset+k) log n)
+    std::partial_sort(all.begin(), all.begin() + total, all.end(),
+        [](const HeapNode& a, const HeapNode& b) { return a.count < b.count; });
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    stats_.time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+
+    if (offset >= total) return {};
+    return std::vector<HeapNode>(all.begin() + offset, all.begin() + total);
 }
 
 void WordCounter::print_stats() const {

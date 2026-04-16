@@ -31,8 +31,11 @@ public:
     // Gera palavras aleatórias e conta
     void count_from_random(size_t num_words, RNG& rng);
 
-    // Retorna as k palavras mais frequentes
-    std::vector<HeapNode> top_k(size_t k);
+    // Retorna as k palavras mais frequentes (a partir do offset)
+    std::vector<HeapNode> top_k(size_t k, size_t offset = 0);
+
+    // Retorna as k palavras menos frequentes (a partir do offset)
+    std::vector<HeapNode> bottom_k(size_t k, size_t offset = 0);
 
     const RunStats& stats() const { return stats_; }
     void print_stats() const;
